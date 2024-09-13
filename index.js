@@ -1,10 +1,15 @@
 const express = require('express');
 const mysql = require('mysql');
+var path = require('path');
 const app = express();
+
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'hbs');
 
 app.use(express.json());
 
-//konfigurasi koneksi
+//conn
 const conn = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -18,18 +23,25 @@ conn.connect((err) =>{
     console.log('Mysql Connected...');
 });
 
-app.get('/', (req, res) => {
-    res.send('<h1>Welcome</h1><h2 style="color:red;">To Express API</h2> <a href="/posts">Data Content</a>');
+
+// return view => CRUD fullstack
+app.get('/', async (req, res) => {
+    await conn.query('SELECT * FROM posts', (err, results) => {
+        res.render('index', {
+            posts: results
+        });
+    });
 });
 
+// return JSON => CRUD API / Backend
 app.get('/posts', async (req, res) => {
     await conn.query('SELECT * FROM posts', (err, results) => {
-        if (err) {
-            throw err;
-        };
         res.status(200).json(results);
     });
 });
+
+
+
 
 app.get('/posts/:id', async (req, res) => {
     const {id} = req.params;
